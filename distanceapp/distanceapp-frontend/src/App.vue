@@ -104,9 +104,7 @@ async function calculateDistance() {
         lng: destination.value.lng,
       },
     })
-    console.log('resp', resp);
     responseData.value = resp.data;
-    console.log('responseData', responseData.value);
   } catch (error) {
     console.error(error);
   }

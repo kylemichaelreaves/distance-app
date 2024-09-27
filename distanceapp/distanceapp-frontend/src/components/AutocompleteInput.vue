@@ -44,15 +44,10 @@ async function fetchPlaces(query: string, callback: (suggestions: Place[]) => vo
   }
 
   try {
-    // Call the backend endpoint to fetch suggestions
     const response = await axios.get('http://127.0.0.1:8000/api/places-autocomplete/', {
       params: {query},
     });
 
-    console.log("response.data", response.data);
-
-
-    // Map the response to a format expected by el-autocomplete
     const places = response.data.predictions.map((place: Place) => ({
       value: place.description,
       place_id: place.place_id,
