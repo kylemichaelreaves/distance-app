@@ -15,8 +15,6 @@ from .serializers import AddressSerializer
 load_dotenv()
 
 GOOGLE_MAPS_API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY')
-print(f"GOOGLE_MAPS_API_KEY: {GOOGLE_MAPS_API_KEY}")
-
 
 class AddressViewSet(viewsets.ModelViewSet):
     # TODO refactor to avoid using all() and opt for something more scalable
@@ -125,7 +123,6 @@ def get_place_details(request):
     if not place_id:
         return JsonResponse({'error': 'Place ID is required.'}, status=400)
 
-    # Fetch place details using the Google Places Details API
     details_url = "https://maps.googleapis.com/maps/api/place/details/json"
     details_params = {
         'place_id': place_id,
