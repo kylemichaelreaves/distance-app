@@ -13,11 +13,3 @@ They specified several requirements:
 I chose the Google Places API because it fit those requirements perfectly. 
 
 According to their feedback, I was rejected for calling Google Places API from the frontend. 
-
-I thought I built a lovely reusable component for the autocomplete inputs, which I'm proud of.
-
-***
-
-To run locally you need to plug in Google API key in my index.html in the frontend. 
-
-***
