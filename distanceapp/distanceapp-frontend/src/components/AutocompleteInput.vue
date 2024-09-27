@@ -1,20 +1,24 @@
 <template>
-  <div>
-    <el-input
-        v-model="inputValue"
-        :id="inputId"
-        type="text"
-        :placeholder="placeholder"
-        class="autocomplete-input"
-        ref="inputRef"
-    />
-  </div>
+  <el-autocomplete
+      v-model="inputValue"
+      :trigger-on-focus="false"
+      :placeholder="props.placeholder"
+      :fetch-suggestions="fetchPlaces"
+      @select="handleSelect"
+      :popper-class="props.inputId"
+      class="autocomplete-input"
+      clearable
+      @input="handleInputChange"
+  />
 </template>
 
 <script setup lang="ts">
-import {onMounted, ref} from 'vue';
+import {ref} from 'vue';
+import axios from 'axios';
 
-const emit = defineEmits(['placeSelected']);
+
+const emit = defineEmits(['placeSelected', 'inputCleared']);
+
 
 const props = defineProps<{
   inputId: string;
@@ -22,59 +26,66 @@ const props = defineProps<{
   countryRestriction: { country: string };
 }>();
 
-const inputRef = ref(null);
 const inputValue = ref('');
 
-function initializeAutocomplete() {
-  // NEVER CHANGE!!!! THIS NEEDS TO BE INPUT FOR THE PLACES API TO WORK!!!!!
-  const nativeInput = inputRef.value?.input as HTMLInputElement;
-
-  if (nativeInput) {
-    const autocomplete = new google.maps.places.Autocomplete(nativeInput, {
-      types: ['geocode', 'establishment'],
-      componentRestrictions: props.countryRestriction,
-    });
-
-    autocomplete.addListener('place_changed', () => {
-      const place = autocomplete.getPlace();
-
-      if (place.geometry) {
-        const formattedPlace = {
-          address: place.formatted_address || place.name,
-          lat: place?.geometry?.location?.lat(),
-          lng: place?.geometry?.location?.lng(),
-          name: place.name,
-          placeId: place.place_id,
-        };
-
-        emit('placeSelected', formattedPlace);
-      } else {
-        console.log('No details available for the input:', nativeInput.value);
-      }
-    });
-    nativeInput.addEventListener('input', handleInputChange);
-  }
-  // } else if (inputRef.value) {
-  //   console.error('Failed to access the native input element:', inputRef.value);
-  // }
+interface Place {
+  description: string;
+  place_id: string;
+  structured_formatting: {
+    main_text: string;
+    secondary_text: string;
+  };
 }
 
-function handleInputChange(event: Event) {
-  const target = event.target as HTMLInputElement;
-  inputValue.value = target.value;
+async function fetchPlaces(query: string, callback: (suggestions: Place[]) => void) {
+  if (!query) {
+    callback([]);
+    return;
+  }
 
-  if (!target.value) {
-    emit('placeSelected', {address: '', lat: 0, lng: 0, name: '', placeId: ''});
+  try {
+    const response = await axios.get('http://127.0.0.1:8000/api/places-autocomplete/', {
+      params: {query},
+    });
+
+    const places = response.data.predictions.map((place: Place) => ({
+      value: place.description,
+      place_id: place.place_id,
+      structured_formatting: place.structured_formatting,
+    }));
+
+    // Update the suggestions using the callback
+    callback(places);
+  } catch (error) {
+    console.error('Error fetching places:', error);
+    callback([]);
   }
 }
 
-onMounted(() => {
-  if (window.google && window.google.maps && window.google.maps.places) {
-    initializeAutocomplete();
-  } else {
-    window.addEventListener('load', initializeAutocomplete);
+interface SelectedPlace {
+  place_id: string;
+}
+
+async function handleSelect(item: SelectedPlace) {
+  try {
+    // Fetch the selected place details including lat and lng
+    const response = await axios.get('http://127.0.0.1:8000/api/get-place-details/', {
+      params: {place_id: item.place_id},
+    });
+
+    // Emit the selected place details to the parent component
+    emit('placeSelected', response.data);
+  } catch (error) {
+    console.error('Error fetching place details:', error);
   }
-});
+}
+
+function handleInputChange(value: string) {
+  inputValue.value = value;
+  if (!value) {
+    emit('inputCleared', '');
+  }
+}
 
 </script>
 
@@ -82,7 +93,7 @@ onMounted(() => {
 .autocomplete-input {
   width: 100%;
   padding: 10px;
-  font-size: 16px;
+  font-size: 18px;
   border-radius: 4px;
   margin-bottom: 10px;
 }

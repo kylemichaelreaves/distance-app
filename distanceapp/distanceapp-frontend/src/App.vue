@@ -11,7 +11,8 @@
         <AutocompleteInput
             input-id="origin-input"
             placeholder="Enter origin address or landmark"
-            @placeSelected="setOrigin"
+            @place-selected="setOrigin"
+            @input-cleared="resetDistance"
             :country-restriction="{country: 'us'}"
         />
       </el-col>
@@ -19,7 +20,8 @@
         <AutocompleteInput
             input-id="destination-input"
             placeholder="Enter destination address or landmark"
-            @placeSelected="setDestination"
+            @place-selected="setDestination"
+            @input-cleared="resetDistance"
             :country-restriction="{country: 'us'}"
         />
       </el-col>
@@ -102,9 +104,7 @@ async function calculateDistance() {
         lng: destination.value.lng,
       },
     })
-    console.log('resp', resp);
     responseData.value = resp.data;
-    console.log('responseData', responseData.value);
   } catch (error) {
     console.error(error);
   }
@@ -130,10 +130,6 @@ watch([origin, destination], () => {
 <style scoped>
 .centered-row {
   display: flex;
-  align-items: baseline;
-}
-
-.button {
-  margin-bottom: 10px;
+  align-items: center;
 }
 </style>
