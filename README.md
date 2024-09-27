@@ -12,9 +12,7 @@ They specified several requirements:
 
 I chose the Google Places API because it fit those requirements perfectly. 
 
-According to their feedback, I was rejected for calling Google Places API from the front end. 
-
-It did not matter to them whether this API was designed to be called from the frontend or not. 
+According to their feedback, I was rejected for calling Google Places API from the frontend. 
 
 I thought I built a lovely reusable component for the autocomplete inputs, which I'm proud of.
 
