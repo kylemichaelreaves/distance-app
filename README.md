@@ -16,7 +16,10 @@ According to their feedback, I was rejected for calling Google Places API from t
 
 It did not matter to them whether this API was designed to be called from the frontend or not. 
 
-Google's documentation is almost exclusively composed of examples of this usecase. 
-In fact, they have code examples in JavaScript and TypeScript. 
-
 I thought I built a lovely reusable component for the autocomplete inputs, which I'm proud of.
+
+***
+
+To run locally you need to plug in Google API key in my index.html in the frontend. 
+
+***
