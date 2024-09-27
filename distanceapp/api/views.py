@@ -4,16 +4,49 @@ from django.db import connection
 from django.http import JsonResponse
 from rest_framework import viewsets
 from rest_framework.decorators import api_view
+import requests
+import os
+from dotenv import load_dotenv
 
 from .models import Address
 from .models import DistanceCache
 from .serializers import AddressSerializer
+
+load_dotenv()
+
+GOOGLE_MAPS_API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY')
+print(f"GOOGLE_MAPS_API_KEY: {GOOGLE_MAPS_API_KEY}")
 
 
 class AddressViewSet(viewsets.ModelViewSet):
     # TODO refactor to avoid using all() and opt for something more scalable
     queryset = Address.objects.all()
     serializer_class = AddressSerializer
+
+
+@api_view(["GET"])
+def google_places_autocomplete(request):
+    """
+    View to handle autocomplete requests to the Google Places API.
+    """
+    query = request.GET.get('query')
+    if not query:
+        return JsonResponse({'error': 'Query parameter is required.'}, status=400)
+
+    url = f"https://maps.googleapis.com/maps/api/place/autocomplete/json"
+    params = {
+        'input': query,
+        'key': GOOGLE_MAPS_API_KEY,
+        'types': 'geocode|establishment',
+        'components': 'country:us',
+    }
+
+    response = requests.get(url, params=params)
+
+    if response.status_code == 200:
+        return JsonResponse(response.json())
+    else:
+        return JsonResponse({'error': 'Failed to fetch places data.'}, status=response.status_code)
 
 
 def parse_address(address_obj):
@@ -84,3 +117,33 @@ def calculate_distance(request):
     DistanceCache.objects.create(origin=origin_address, destination=destination_address, distance=distance_miles)
 
     return JsonResponse({'distance': distance_miles, 'cached': False})
+
+
+@api_view(["GET"])
+def get_place_details(request):
+    place_id = request.GET.get('place_id')
+    if not place_id:
+        return JsonResponse({'error': 'Place ID is required.'}, status=400)
+
+    # Fetch place details using the Google Places Details API
+    details_url = "https://maps.googleapis.com/maps/api/place/details/json"
+    details_params = {
+        'place_id': place_id,
+        'key': GOOGLE_MAPS_API_KEY,
+    }
+
+    details_response = requests.get(details_url, params=details_params)
+    if details_response.status_code != 200:
+        return JsonResponse({'error': 'Failed to fetch place details.'}, status=details_response.status_code)
+
+    details = details_response.json().get('result', {})
+    geometry = details.get('geometry', {})
+    location = geometry.get('location', {})
+
+    return JsonResponse({
+        'address': details.get('formatted_address', ''),
+        'lat': location.get('lat'),
+        'lng': location.get('lng'),
+        'name': details.get('name', ''),
+        'placeId': place_id,
+    })
