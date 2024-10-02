@@ -1,4 +1,4 @@
-# ChannelFactory Coding Test
+# Coding Test
 
 The challenge was to design an API which would call a Google API to display the distance between two addresses. 
 
